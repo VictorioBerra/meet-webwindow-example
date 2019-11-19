@@ -22,7 +22,7 @@ class Build : NukeBuild
     ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
     ///   - Microsoft VSCode           https://nuke.build/vscode
 
-    public static int Main () => Execute<Build>(x => x.Compile);
+    public static int Main () => Execute<Build>(x => x.Publish);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
@@ -34,7 +34,8 @@ class Build : NukeBuild
     AbsolutePath TestsDirectory => RootDirectory / "tests";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
     Project PublishProject => Solution.GetProject(nameOrFullPath: "WebWindowExample");
-
+    
+    string runtime = "win-x64";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -49,6 +50,7 @@ class Build : NukeBuild
         .Executes(() =>
         {
             DotNetRestore(_ => _
+                .SetRuntime(runtime)
                 .SetProjectFile(Solution));
         });
 
@@ -59,6 +61,7 @@ class Build : NukeBuild
             DotNetBuild(_ => _
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)
+                .SetRuntime(runtime)
                 .EnableNoRestore());
         });
 
@@ -70,10 +73,11 @@ class Build : NukeBuild
                 .SetProject(PublishProject)
                 .SetConfiguration(Configuration)
                 .SetOutput(ArtifactsDirectory)
-                .SetRuntime("win10-x86")
-                .EnableNoBuild()
+                .SetRuntime(runtime)
                 .EnableSelfContained()
-                .EnableNoRestore());
+                .EnableNoBuild()
+                .EnableNoRestore()
+                );
         });
 
 }
